@@ -1,6 +1,16 @@
+from pathlib import Path
+
 import numpy as np
 
-from pbhmini import abundance_curve, baryon_asymmetry, lifetime_seconds, scan_parameters
+from pbhmini import (
+    abundance_benchmark,
+    abundance_curve,
+    baryon_asymmetry,
+    evaporation_benchmark,
+    lifetime_seconds,
+    scan_parameters,
+    write_evaporation_html,
+)
 
 
 def test_abundance_increases_with_amplitude():
@@ -22,3 +32,15 @@ def test_lifetime_mass_scaling():
 def test_baryon_asymmetry_positive():
     assert baryon_asymmetry(1e9, 1e12, 1e-25, 1e-9) > 0
 
+
+def test_benchmark_outputs_are_finite():
+    abundance = abundance_benchmark()
+    evaporation = evaporation_benchmark()
+    assert np.all(np.isfinite(abundance["ratio"]))
+    assert evaporation["abs_error_g"].max() < 1e-6
+
+
+def test_live_simulation_html_is_written(tmp_path):
+    path = write_evaporation_html(Path(tmp_path) / "sim.html")
+    assert path.exists()
+    assert "PBH Evaporation Toy Simulation" in path.read_text(encoding="utf-8")
